@@ -7,7 +7,7 @@ import "./App.css";
 
 const SHARED_USERNAME = process.env.REACT_APP_USERNAME;
 const SHARED_PASSWORD = process.env.REACT_APP_PASSWORD;
-alert("pass Env Vars:", process.env.REACT_APP_PASSWORD);
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

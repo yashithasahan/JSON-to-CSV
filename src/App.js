@@ -5,8 +5,7 @@ import "./App.css";
 
 
 
-const SHARED_USERNAME = process.env.REACT_APP_USERNAME;
-const SHARED_PASSWORD = process.env.REACT_APP_PASSWORD;
+
 
 
 function App() {
@@ -14,18 +13,21 @@ function App() {
   const [loginError, setLoginError] = useState("");
 
   const handleLogin = (username, password) => {
-    if (SHARED_PASSWORD === undefined || SHARED_USERNAME === undefined) {
-      setLoginError("Environment variables are not set.");
-      console.warn("Environment variables are not set.");
-      return;
-    }
-    if (username === SHARED_USERNAME && password === SHARED_PASSWORD) {
-      setIsAuthenticated(true);
-      setLoginError("");
-      console.log("Authentication successful");
-    } else {
-      setLoginError("Invalid username or password.");
-      console.warn("Authentication failed");
+    try {
+      if (
+        username === process.env.REACT_APP_USERNAME &&
+        password === process.env.REACT_APP_PASSWORD
+      ) {
+        setIsAuthenticated(true);
+        setLoginError("");
+        console.log("Authentication successful");
+      } else {
+        setLoginError("Invalid username or password.");
+        console.warn("Authentication failed");
+      }
+    } catch (error) {
+      setLoginError("Something went wrong. Please try again.");
+      console.warn("Environment variable error:", error);
     }
   };
 

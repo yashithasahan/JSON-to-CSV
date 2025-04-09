@@ -3,15 +3,22 @@ import LoginPage from "./LoginPage";
 import ConverterApp from "./ConverterApp";
 import "./App.css";
 
-// --- Credentials ---
-const SHARED_USERNAME = "user";
-const SHARED_PASSWORD = "password";
+
+
+const SHARED_USERNAME = process.env.REACT_APP_USERNAME;
+const SHARED_PASSWORD = process.env.REACT_APP_PASSWORD;
+alert("pass Env Vars:", process.env.REACT_APP_PASSWORD);
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState("");
 
   const handleLogin = (username, password) => {
+    if (SHARED_PASSWORD === undefined || SHARED_USERNAME === undefined) {
+      setLoginError("Environment variables are not set.");
+      console.warn("Environment variables are not set.");
+      return;
+    }
     if (username === SHARED_USERNAME && password === SHARED_PASSWORD) {
       setIsAuthenticated(true);
       setLoginError("");

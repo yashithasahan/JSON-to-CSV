@@ -28,8 +28,18 @@ function ConverterApp() {
     if (!file) {
       return;
     }
-    if (file.type !== "application/json") {
+
+    if (
+      file.type !== "application/json" &&
+      !file.name.toLowerCase().endsWith(".json")
+    ) {
+      setError(
+        "Invalid file type. Please upload a file with a .json extension."
+      );
+      resetState();
+      return;
     }
+
     setInputFileName(file.name.replace(/\.[^/.]+$/, ""));
     setError("");
     setCsvData(null);
@@ -42,6 +52,8 @@ function ConverterApp() {
       try {
         const content = e.target.result;
         const parsedJson = JSON.parse(content);
+
+        // Validation
         if (typeof parsedJson !== "object" || parsedJson === null) {
           throw new Error(
             "Invalid JSON format: Root must be an object or array."
@@ -61,6 +73,7 @@ function ConverterApp() {
             "Invalid JSON format: If root is an array, it must contain only objects."
           );
         }
+
         setJsonData(dataToProcess);
         setError("");
         console.log("JSON parsing successful.");
@@ -80,25 +93,30 @@ function ConverterApp() {
     reader.readAsText(file);
   };
 
+  // --- Event Handlers ---
   const handleFileChange = (event) => {
     processFile(event.target.files[0]);
     event.target.value = null;
   };
+
   const handleDragEnter = (event) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDraggingOver(true);
   };
+
   const handleDragLeave = (event) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDraggingOver(false);
   };
+
   const handleDragOver = (event) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDraggingOver(true);
   };
+
   const handleDrop = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -106,15 +124,32 @@ function ConverterApp() {
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
       processFile(files[0]);
-      if (event.dataTransfer.items) event.dataTransfer.items.clear();
-      else event.dataTransfer.clearData();
+      if (event.dataTransfer.items) {
+        event.dataTransfer.items.clear();
+      } else {
+        event.dataTransfer.clearData();
+      }
     }
   };
 
-  const escapeCsvValue = (value) => {};
+  // --- CSV Formatting  ---
+  const escapeCsvValue = (value) => {
+    if (value == null) {
+      return "";
+    }
+    const stringValue = String(value);
+    if (
+      stringValue.includes(",") ||
+      stringValue.includes('"') ||
+      stringValue.includes("\n")
+    ) {
+      const escapedValue = stringValue.replace(/"/g, '""');
+      return `"${escapedValue}"`;
+    }
+    return stringValue;
+  };
 
-  // --- convertToCSV function ---
-
+  // --- CSV Conversion  ---
   const convertToCSV = useCallback(() => {
     if (!jsonData) {
       setError("No valid JSON data available to convert.");
@@ -123,15 +158,14 @@ function ConverterApp() {
       return;
     }
     if (jsonData.length === 0) {
-      setError("Cannot convert empty JSON data.");
-      setCsvData(null);
-      setCsvHeaders([]);
-      return;
+      console.warn("JSON array is empty, proceeding with conversion.");
     }
+
     setIsLoading(true);
     setError("");
     setCsvData(null);
     setCsvHeaders([]);
+
     setTimeout(() => {
       try {
         const allKeys = new Set();
@@ -141,9 +175,12 @@ function ConverterApp() {
         });
         const headers = Array.from(allKeys);
         setCsvHeaders(headers);
+
         const csvRows = [];
-        if (headers.length > 0)
+        if (headers.length > 0) {
           csvRows.push(headers.map(escapeCsvValue).join(","));
+        }
+
         jsonData.forEach((rowObject) => {
           if (typeof rowObject === "object" && rowObject !== null) {
             const values = headers.map((header) => {
@@ -155,6 +192,7 @@ function ConverterApp() {
             csvRows.push(values.join(","));
           }
         });
+
         setCsvData(csvRows.join("\n"));
         console.log("CSV conversion successful.");
       } catch (err) {
@@ -168,18 +206,52 @@ function ConverterApp() {
     }, 50);
   }, [jsonData]);
 
-  const downloadCSV = () => {};
+  // --- CSV Download  ---
+  const downloadCSV = () => {
+    if (!csvData && csvData !== "") {
+      setError("No CSV data generated to download.");
+      return;
+    }
+    if (isLoading) return;
+
+    try {
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute("href", url);
+
+      const downloadFileName = inputFileName
+        ? `${inputFileName}.csv`
+        : "converted_data.csv";
+      link.setAttribute("download", downloadFileName);
+      link.style.visibility = "hidden";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log("CSV download triggered.");
+    } catch (err) {
+      console.error("Error during CSV download:", err);
+      setError(`Failed to initiate download: ${err.message}`);
+    }
+  };
 
   return (
     <div className="converter-container">
       <h1>JSON to CSV Converter</h1>
 
+      {/* Loading Indicator */}
       {isLoading && (
         <div className="loading-indicator">Processing... Please wait.</div>
       )}
 
       {!isLoading && error && <p className="error-message">{error}</p>}
 
+      {/* Upload UI */}
       {!isLoading && csvData === null && (
         <div
           className={`drop-zone ${isDraggingOver ? "dragging" : ""}`}
@@ -201,14 +273,13 @@ function ConverterApp() {
             style={{ display: "none" }}
             disabled={isLoading}
           />
-
           {inputFileName && (
             <p className="file-name-display">Selected: {inputFileName}.json</p>
           )}
         </div>
       )}
 
-      {/* --- Action Buttons --- */}
+      {/* Action Buttons */}
       <div className="action-buttons-container">
         {!isLoading && jsonData && csvData === null && (
           <button
@@ -220,10 +291,9 @@ function ConverterApp() {
           </button>
         )}
 
-        {/* Download & New Buttons */}
+        {/* Download & New Buttons*/}
         {!isLoading && csvData !== null && (
           <>
-            {" "}
             <button
               onClick={downloadCSV}
               className="action-button download-button"
@@ -242,7 +312,7 @@ function ConverterApp() {
         )}
       </div>
 
-      {/* --- Table Preview  --- */}
+      {/* Table Preview*/}
       {!isLoading && csvData !== null && csvHeaders.length > 0 && jsonData && (
         <div className="table-preview-container">
           <h3>Table Preview (First 5 Data Rows)</h3>

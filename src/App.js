@@ -34,7 +34,8 @@ function App() {
   return (
     <div className="App">
       {!isAuthenticated ? (
-        <LoginPage onLogin={handleLogin} error={loginError} />
+        // <LoginPage onLogin={handleLogin} error={loginError} />
+        <ConverterApp />
       ) : (
         <ConverterApp />
       )}

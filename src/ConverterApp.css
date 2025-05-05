@@ -1,0 +1,276 @@
+.converter-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: sans-serif;
+}
+.loading-indicator {
+  padding: 15px;
+  background-color: #e0e0e0;
+  text-align: center;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+.error-message {
+  color: red;
+  background-color: #ffe0e0;
+  border: 1px solid red;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+.drop-zone {
+  border: 2px dashed #ccc;
+  padding: 30px;
+  text-align: center;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  transition: background-color 0.2s ease;
+}
+.drop-zone.dragging {
+  background-color: #e0e0ff;
+  border-color: #9999ff;
+}
+.file-label {
+  cursor: pointer;
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+.file-label:hover {
+  background-color: #0056b3;
+}
+.file-name-display {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+}
+.action-buttons-container {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.action-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.convert-button {
+  background-color: #28a745;
+  color: white;
+}
+.convert-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+.download-button {
+  background-color: #007bff;
+  color: white;
+}
+.download-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+.new-button {
+  background-color: #6c757d;
+  color: white;
+}
+.new-button:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+.new-button.secondary {
+  background-color: #ffc107;
+  color: black;
+}
+.new-button.secondary:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
+.file-list-container {
+  margin-top: 20px;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.file-item {
+  padding: 8px 5px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.file-item:last-child {
+  border-bottom: none;
+}
+.file-name {
+  font-weight: bold;
+  flex-grow: 1;
+  word-break: break-all;
+}
+.file-status {
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #e0e0e0;
+  color: #333;
+  white-space: nowrap;
+}
+.file-error {
+  color: red;
+  font-size: 0.9em;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Status-specific styling */
+.status-pending .file-status,
+.status-reading .file-status,
+.status-parsing .file-status {
+  background-color: #e0e0e0;
+}
+.status-parsed .file-status {
+  background-color: #ffc107;
+  color: black;
+}
+.status-converting .file-status {
+  background-color: #17a2b8;
+  color: white;
+}
+.status-converted .file-status {
+  background-color: #28a745;
+  color: white;
+}
+.status-error .file-status {
+  background-color: #dc3545;
+  color: white;
+}
+.status-error .file-name {
+  text-decoration: line-through;
+}
+
+.table-preview-container.minimal-preview {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Simple Table Preview (If you keep it) */
+.table-preview-container {
+  margin-top: 30px;
+}
+.table-wrapper {
+  max-height: 300px;
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+.csv-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.csv-preview-table th,
+.csv-preview-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+.csv-preview-table th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.preview-notice {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #555;
+  text-align: center;
+}
+.file-item {
+  /* ... (existing styles like padding, border-bottom, display flex) ... */
+  padding: 8px 5px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping for button */
+  gap: 10px;
+  align-items: center;
+  transition: background-color 0.2s ease; /* Smooth background transition */
+}
+.file-item:last-child {
+  border-bottom: none;
+}
+
+/* Style for the preview button in the list */
+.preview-button {
+  margin-left: auto; /* Push button to the right */
+  padding: 3px 8px;
+  font-size: 0.8em;
+  border: 1px solid #007bff;
+  background-color: white;
+  color: #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+.preview-button:hover {
+  background-color: #e7f3ff;
+}
+.preview-button.active {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  cursor: default; /* Indicate it's already active */
+}
+.preview-button:disabled {
+  /* Although not used here, good practice */
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Highlight the list item that is currently being previewed */
+.file-item.previewing {
+  background-color: #e7f3ff; /* Light blue background */
+}
+
+/* Styles for the preview file name in the header */
+.preview-filename {
+  font-weight: bold;
+  color: #0056b3; /* Example color */
+}
+
+/* Optional: Style for the minimal preview message */
+.table-preview-container.minimal-preview {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-align: center;
+  font-style: italic;
+  color: #555;
+}

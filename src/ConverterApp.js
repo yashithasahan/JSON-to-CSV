@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react"; // Import useEffect
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import "./ConverterApp.css";
@@ -10,7 +10,6 @@ function ConverterApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef(null);
-  // *** New state to track the ID of the file to preview ***
   const [previewFileId, setPreviewFileId] = useState(null);
 
   // --- Reset Logic ---
@@ -20,18 +19,17 @@ function ConverterApp() {
     setGlobalError("");
     setIsLoading(false);
     setIsDraggingOver(false);
-    setPreviewFileId(null); // *** Reset preview ID ***
+    setPreviewFileId(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = null;
     }
   };
 
-  // handleNewConversion calls resetState, so it's covered.
   const handleNewConversion = () => {
     resetState();
   };
 
-  // (Utilities, Core File Processing, Event Handlers, CSV Formatting... remain the same)
+  // (Utilities, Core File Processing... remain the same)
   const generateUniqueId = () =>
     `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -40,10 +38,10 @@ function ConverterApp() {
       return;
     }
 
-    setGlobalError(""); // Clear global error on new uploads
-    setPreviewFileId(null); // Reset preview on new file upload
+    setGlobalError("");
+    setPreviewFileId(null);
     const newFilesToProcess = [];
-    let currentFiles = []; // Keep track of files added in this batch
+    let currentFiles = [];
 
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
@@ -55,32 +53,27 @@ function ConverterApp() {
         jsonData: null,
         csvData: null,
         csvHeaders: [],
-        status: "pending", // 'pending', 'reading', 'parsing', 'parsed', 'converting', 'converted', 'error'
+        status: "pending",
         error: null,
       };
 
-      // Basic Type Validation
       if (
         file.type !== "application/json" &&
         !file.name.toLowerCase().endsWith(".json")
       ) {
         fileEntry.status = "error";
         fileEntry.error = "Invalid file type (must be .json)";
-        console.warn(`Skipping non-JSON file: ${file.name}`);
-        currentFiles.push(fileEntry); // Add even invalid ones to show error
-        continue; // Skip reading this file
+        currentFiles.push(fileEntry);
+        continue;
       }
 
-      // Mark valid file for reading and add to processing list
       fileEntry.status = "reading";
       currentFiles.push(fileEntry);
-      newFilesToProcess.push(fileEntry); // Add to list for async processing
+      newFilesToProcess.push(fileEntry);
     }
 
-    // Add all files (valid placeholders and invalid ones) from this batch to state
     setFilesData((prev) => [...prev, ...currentFiles]);
 
-    // Process reading asynchronously only for valid files
     newFilesToProcess.forEach((fileEntry) => {
       readFileContent(fileEntry.id, fileEntry.file);
     });
@@ -99,7 +92,6 @@ function ConverterApp() {
         const content = e.target.result;
         const parsedJson = JSON.parse(content);
 
-        // Validation
         if (typeof parsedJson !== "object" || parsedJson === null) {
           throw new Error("Root must be an object or array.");
         }
@@ -128,9 +120,7 @@ function ConverterApp() {
               : item
           )
         );
-        console.log(`JSON parsing successful for file ID: ${fileId}`);
       } catch (err) {
-        console.error(`Error processing JSON for file ID ${fileId}:`, err);
         setFilesData((prev) =>
           prev.map((item) =>
             item.id === fileId
@@ -147,7 +137,6 @@ function ConverterApp() {
     };
 
     reader.onerror = (e) => {
-      console.error(`Error reading file ID ${fileId}:`, e);
       setFilesData((prev) =>
         prev.map((item) =>
           item.id === fileId
@@ -167,7 +156,6 @@ function ConverterApp() {
 
   const handleFileChange = (event) => {
     processAndAddFiles(event.target.files);
-    // Don't reset input value here immediately if using ref for reset
   };
 
   const handleDragEnter = (event) => {
@@ -179,7 +167,6 @@ function ConverterApp() {
   const handleDragLeave = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    // Add a small delay or check relatedTarget to prevent flickering
     if (
       event.relatedTarget &&
       event.currentTarget.contains(event.relatedTarget)
@@ -192,7 +179,7 @@ function ConverterApp() {
   const handleDragOver = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsDraggingOver(true); // Ensure it stays true while dragging over
+    setIsDraggingOver(true);
   };
 
   const handleDrop = (event) => {
@@ -223,39 +210,28 @@ function ConverterApp() {
     return stringValue;
   };
 
-  // --- CSV Conversion ---
   const convertAllToCSV = useCallback(() => {
-    console.log("Attempting conversion for all parsed files...");
     setGlobalError("");
     const filesReadyForConversion = filesData.filter(
       (f) => f.status === "parsed" && f.jsonData
     );
     if (filesReadyForConversion.length === 0) {
-      console.warn("No files found with status 'parsed'. Cannot convert.");
       setGlobalError(
         "No files ready for conversion (ensure they are parsed successfully)."
       );
       return;
     }
-    console.log(
-      `${filesReadyForConversion.length} file(s) are ready for conversion.`
-    );
     setFilesData((prevFilesData) =>
       prevFilesData.map((fileData) => {
         if (fileData.status === "parsed" && fileData.jsonData) {
-          // ... (conversion logic remains the same)
-          console.log(`Converting file ID: ${fileData.id}`);
           try {
-            // Set status to 'converting' immediately within the map
             const updatedFileData = {
               ...fileData,
               status: "converting",
               error: null,
             };
 
-            // Perform conversion
             const allKeys = new Set();
-            // Ensure jsonData exists and is an array before iterating
             if (Array.isArray(updatedFileData.jsonData)) {
               updatedFileData.jsonData.forEach((obj) => {
                 if (typeof obj === "object" && obj !== null)
@@ -269,7 +245,6 @@ function ConverterApp() {
               csvRows.push(headers.map(escapeCsvValue).join(","));
             }
 
-            // Ensure jsonData exists and is an array before iterating
             if (Array.isArray(updatedFileData.jsonData)) {
               updatedFileData.jsonData.forEach((rowObject) => {
                 if (typeof rowObject === "object" && rowObject !== null) {
@@ -285,60 +260,66 @@ function ConverterApp() {
 
             updatedFileData.csvData = csvRows.join("\n");
             updatedFileData.csvHeaders = headers;
-            updatedFileData.status = "converted"; // Final status on success
-            console.log(
-              `CSV conversion successful for file ID: ${fileData.id}`
-            );
+            updatedFileData.status = "converted";
             return updatedFileData;
           } catch (err) {
-            console.error(
-              `Error converting file ID ${fileData.id} to CSV:`,
-              err
-            );
-            // Update status and error on failure
             return {
               ...fileData,
               status: "error",
               error: `CSV Conversion Error: ${err.message}`,
-              csvData: null,
-              csvHeaders: [],
             };
           }
         }
         return fileData;
       })
     );
-  }, [filesData]); // Dependency array is correct
+  }, [filesData]);
 
-  // --- Effect to set initial preview after conversion ---
   useEffect(() => {
-    // Only run if no preview is selected yet
     if (previewFileId === null) {
-      // Find the first converted file in the current state
       const firstConverted = filesData.find((f) => f.status === "converted");
       if (firstConverted) {
-        console.log(`Setting initial preview to file ID: ${firstConverted.id}`);
         setPreviewFileId(firstConverted.id);
       }
     }
-    // Run this effect whenever filesData changes, specifically after conversions update status
-  }, [filesData, previewFileId]); // Depend on filesData and previewFileId
+  }, [filesData, previewFileId]);
 
-  // --- CSV Download Logic --- (Keep as is)
+  // --- MODIFICATION ---
+  // New function to download a single CSV file.
+  const downloadSingleCSV = useCallback(() => {
+    const fileToDownload = filesData.find(
+      (f) => f.status === "converted" && f.csvData !== null
+    );
+
+    if (fileToDownload) {
+      console.log(
+        `Downloading single file: ${fileToDownload.inputFileName}.csv`
+      );
+      const blob = new Blob([fileToDownload.csvData], {
+        type: "text/csv;charset=utf-8",
+      });
+      const filename = `${
+        fileToDownload.inputFileName || "converted_data"
+      }.csv`;
+      saveAs(blob, filename);
+    } else {
+      setGlobalError("Could not find the converted file to download.");
+    }
+  }, [filesData]); // Depends on filesData to find the file
+
+  // --- MODIFICATION ---
+  // Keep the original ZIP function, but we'll call it conditionally.
   const downloadAllCSVsAsZip = async () => {
     const filesToZip = filesData.filter(
       (f) => f.status === "converted" && f.csvData !== null
     );
 
     if (filesToZip.length === 0) {
-      setGlobalError(
-        "No successfully converted CSV files available to download."
-      );
+      setGlobalError("No converted files available to download.");
       return;
     }
-    if (isLoading) return; // Prevent multiple clicks
+    if (isLoading) return;
 
-    console.log(`Preparing ZIP for ${filesToZip.length} file(s)...`);
     setIsLoading(true);
     setGlobalError("");
 
@@ -347,21 +328,11 @@ function ConverterApp() {
       filesToZip.forEach((fileData) => {
         const filename = `${fileData.inputFileName || "converted_data"}.csv`;
         zip.file(filename, fileData.csvData);
-        console.log(`Added ${filename} to ZIP.`);
       });
 
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: {
-          level: 6, // Adjust compression level (1-9) as needed
-        },
-      });
-
-      saveAs(zipBlob, "converted_json_files.zip"); // Use file-saver
-      console.log("ZIP download triggered.");
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, "converted_json_files.zip");
     } catch (err) {
-      console.error("Error creating or downloading ZIP file:", err);
       setGlobalError(`Failed to create ZIP: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -370,29 +341,27 @@ function ConverterApp() {
 
   // --- Render Logic ---
   const hasParsedFiles = filesData.some((f) => f.status === "parsed");
-  const hasConvertedFiles = filesData.some((f) => f.status === "converted");
   const isProcessing = filesData.some((f) =>
     ["reading", "parsing", "converting"].includes(f.status)
   );
 
-  // *** Find the file to preview based on the selected ID ***
+  // --- MODIFICATION ---
+  // Instead of a boolean, we get the actual converted files and their count.
+  const convertedFiles = filesData.filter((f) => f.status === "converted");
+  const convertedFilesCount = convertedFiles.length;
+
   const fileToPreview = filesData.find(
     (f) => f.id === previewFileId && f.status === "converted"
   );
 
   return (
     <div className="converter-container">
-      <h1>JSON to CSV Converter </h1>
+      <h1>JSON to CSV Converter</h1>
 
-      {/* Loading, Global Error, Upload UI ... (Keep as is) */}
       {(isLoading || isProcessing) && (
         <div className="loading-indicator">
-          {isLoading
-            ? "Preparing ZIP..."
-            : isProcessing
-            ? "Processing files..."
-            : ""}{" "}
-          Please wait.
+          {isLoading ? "Preparing Download..." : "Processing files..."} Please
+          wait.
         </div>
       )}
 
@@ -400,7 +369,8 @@ function ConverterApp() {
         <p className="error-message">{globalError}</p>
       )}
 
-      {!hasConvertedFiles && !isProcessing && (
+      {/* --- MODIFICATION --- Changed condition to use count */}
+      {convertedFilesCount === 0 && !isProcessing && (
         <div
           className={`drop-zone ${isDraggingOver ? "dragging" : ""}`}
           onDragEnter={handleDragEnter}
@@ -426,7 +396,6 @@ function ConverterApp() {
         </div>
       )}
 
-      {/* --- Files List / Status (Modified) --- */}
       {filesData.length > 0 && (
         <div className="file-list-container">
           <h3>Uploaded Files Status:</h3>
@@ -443,7 +412,6 @@ function ConverterApp() {
                 {f.error && (
                   <span className="file-error">Error: {f.error}</span>
                 )}
-                {/* *** Add Preview Button for converted files *** */}
                 {f.status === "converted" && !isProcessing && !isLoading && (
                   <button
                     className={`preview-button ${
@@ -461,7 +429,6 @@ function ConverterApp() {
         </div>
       )}
 
-      {/* Action Buttons ... (Keep as is) */}
       <div className="action-buttons-container">
         {hasParsedFiles && !isProcessing && !isLoading && (
           <button
@@ -469,41 +436,58 @@ function ConverterApp() {
             className="action-button convert-button"
             disabled={!hasParsedFiles || isProcessing || isLoading}
           >
-            Convert All to CSV
+            Convert to CSV
           </button>
         )}
 
-        {hasConvertedFiles && !isLoading && !isProcessing && (
+        {/* --- MODIFICATION START --- */}
+        {/* Render buttons conditionally based on the number of converted files. */}
+
+        {/* Show this button ONLY if there is exactly ONE converted file. */}
+        {convertedFilesCount === 1 && !isLoading && !isProcessing && (
+          <button
+            onClick={downloadSingleCSV}
+            className="action-button download-button"
+            disabled={isLoading || isProcessing}
+          >
+            Download CSV
+          </button>
+        )}
+
+        {/* Show this button ONLY if there are MORE THAN ONE converted files. */}
+        {convertedFilesCount > 1 && !isLoading && !isProcessing && (
           <button
             onClick={downloadAllCSVsAsZip}
             className="action-button download-button"
             disabled={isLoading || isProcessing}
           >
-            Download All as ZIP
+            Download All as ZIP ({convertedFilesCount} files)
           </button>
         )}
+        {/* --- MODIFICATION END --- */}
 
         {filesData.length > 0 && !isLoading && (
           <button
             onClick={handleNewConversion}
+            // --- MODIFICATION --- Changed condition to use count
             className={`action-button new-button ${
-              hasConvertedFiles ? "" : "secondary"
+              convertedFilesCount > 0 ? "" : "secondary"
             }`}
             disabled={isLoading}
           >
-            {hasConvertedFiles ? "+ New Conversion" : "Clear / Start Over"}
+            {/* --- MODIFICATION --- Changed condition to use count */}
+            {convertedFilesCount > 0
+              ? "+ New Conversion"
+              : "Clear / Start Over"}
           </button>
         )}
       </div>
 
-      {/* --- Table Preview Section (Using fileToPreview based on ID) --- */}
-      {/* Renders only if a valid file is selected for preview */}
       {!isLoading && !isProcessing && fileToPreview && (
         <div className="table-preview-container">
           <h3>
             Table Preview for:{" "}
             <span className="preview-filename">{fileToPreview.file.name}</span>{" "}
-            (First 5 Data Rows)
           </h3>
           {fileToPreview.csvHeaders &&
           fileToPreview.csvHeaders.length > 0 &&
@@ -542,26 +526,32 @@ function ConverterApp() {
               </table>
             </div>
           ) : (
-            <p>No data or headers found to preview for this file.</p>
+            <p>No data found to preview for this file.</p>
           )}
           {fileToPreview.jsonData && fileToPreview.jsonData.length > 5 && (
             <p className="preview-notice">
-              (Showing first 5 of {fileToPreview.jsonData.length} data rows)
+              (Showing first 5 of {fileToPreview.jsonData.length} total rows)
             </p>
           )}
           {fileToPreview.jsonData && fileToPreview.jsonData.length === 0 && (
             <p className="preview-notice">
-              (The JSON file contained an empty array or no data objects).
+              (The JSON file was empty or contained no data objects).
             </p>
           )}
         </div>
       )}
-      {/* Message if converted files exist but none selected */}
-      {hasConvertedFiles && !fileToPreview && !isLoading && !isProcessing && (
-        <div className="table-preview-container minimal-preview">
-          <p>Select a converted file from the list above to see its preview.</p>
-        </div>
-      )}
+
+      {/* --- MODIFICATION --- Changed condition to use count */}
+      {convertedFilesCount > 0 &&
+        !fileToPreview &&
+        !isLoading &&
+        !isProcessing && (
+          <div className="table-preview-container minimal-preview">
+            <p>
+              Select a converted file from the list above to see its preview.
+            </p>
+          </div>
+        )}
     </div>
   );
 }
